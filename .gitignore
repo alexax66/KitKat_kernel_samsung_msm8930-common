@@ -99,3 +99,6 @@ arch/arm/boot/compressed/vmlinux
 # ignore initramfs
 initramfs
 /*.sh
+
+# Output directory
+output/
