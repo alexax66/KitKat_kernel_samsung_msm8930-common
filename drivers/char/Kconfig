@@ -261,7 +261,7 @@ config NWFLASH
 
 	  If you're not sure, say N.
 
-source "drivers/char/hw_random/Kconfig"
+source "drivers/char/frandom/Kconfig"
 
 config NVRAM
 	tristate "/dev/nvram support"
@@ -681,6 +681,5 @@ config CSDIO_DEVICE_ID
 	help
 	  Enter device id for targeted sdio device, this may be overwritten by
 	  module parameters.
-.
-endmenu
 
+endmenu
