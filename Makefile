@@ -194,7 +194,8 @@ SUBARCH := $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ \
 export KBUILD_BUILDHOST := $(SUBARCH)
 ARCH		?= arm
 SUBARCH		?= arm
-CROSS_COMPILE   ?=/opt/toolchains/LinaroMod-arm-eabi-4.9-master/bin/arm-eabi-
+#CROSS_COMPILE   ?=/opt/toolchains/LinaroMod-arm-eabi-4.9-master/bin/arm-eabi-
+CROSS_COMPILE   ?=/opt/toolchains/arm-cortex_a15-linux-gnueabihf-linaro_4.9.4-2015.06/bin/arm-eabi-
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
