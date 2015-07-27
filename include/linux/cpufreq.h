@@ -452,6 +452,9 @@ extern struct cpufreq_governor cpufreq_gov_lionheart;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_PRESERVATIVE)
 extern struct cpufreq_governor cpufreq_gov_preservative;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_preservative)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX)
+extern struct cpufreq_governor cpufreq_gov_smartmax;
+#define CPUFREQ_DEFAULT_GOVERNOR        (&cpufreq_gov_smartmax)
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_WHEATLEY)
 extern struct cpufreq_governor cpufreq_gov_wheatley;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_wheatley)
