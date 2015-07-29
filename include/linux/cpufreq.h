@@ -276,11 +276,11 @@ extern unsigned int limited_max_freq;
 #endif
 
 static inline void cpufreq_verify_within_limits(struct cpufreq_policy *policy, unsigned int min, unsigned int max)
+{
 #ifdef CONFIG_MSM_CPUFREQ_LIMITER
 	max = min(limited_max_freq, max);
 #endif
 
-{
 	if (policy->min < min)
 		policy->min = min;
 	if (policy->max < min)
