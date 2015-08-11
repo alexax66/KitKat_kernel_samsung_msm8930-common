@@ -216,6 +216,10 @@ u8 mhl_onoff_ex(bool onoff)
 
 #endif
 	} else {
+	if (sii9234->mhl_event_switch.state == 1) {
+		pr_debug("sii9234_data: %s MHL switch event sent :0\n", __func__);
+		switch_set_state(&sii9234->mhl_event_switch, 0);
+	}
 		wake_unlock(&sii9234->mhl_wake_lock);
 		sii9234_cancel_callback();
 
@@ -791,7 +795,10 @@ static int is_rcp_key_code_valid(u8 key)
 
 static void cbus_process_rcp_key(struct sii9234_data *sii9234, u8 key)
 {
-
+	if (key == 0x7E) {
+		pr_debug("sii9234_data: %s MHL switch event sent :1\n", __func__);
+		switch_set_state(&sii9234->mhl_event_switch, 1);
+	}
 	if (is_rcp_key_code_valid(key)) {
 		/* Report the key */
 		rcp_uevent_report(sii9234, key);
@@ -1225,6 +1232,10 @@ int rsen_state_timer_out(struct sii9234_data *sii9234)
 		pr_info("sys_stat: %x ~\n", value);
 		if ((value & RSEN_STATUS) == 0)	{
 			pr_info("RSEN Really LOW ~\n");
+			if (sii9234->mhl_event_switch.state == 1) {
+				pr_debug("sii9234_data: %s MHL switch event sent :0\n", __func__);
+				switch_set_state(&sii9234->mhl_event_switch, 0);
+			}
 			/*To meet CTS 3.3.22.2 spec*/
 			sii9234_tmds_control(sii9234, false);
 			force_usb_id_switch_open(sii9234);
@@ -2033,19 +2044,7 @@ static void sii9234_detection_callback(struct work_struct *work)
 		pr_info("dcap_timeout err, dcap_staus:%d\n",
 				sii9234->dcap_ready_status);
 	} else {
-		switch (sii9234->devcap.mhl_ver & 0xf0) {
-			case 0x10:
-				pr_info("%s() MHL dongle ver 1.0 ", __func__);
-				/*SAMSUNG DEVICE_ID 0x1134:dongle, 0x1234:dock*/
-				if (sii9234->devcap.device_id == SS_MHL_DONGLE_DEV_ID ||
-						sii9234->devcap.device_id == SS_MHL_DOCK_DEV_ID)
-					sii9234->vbus_owner = sii9234->devcap.reserved_data;
-				else {
-					pr_cont("vbus_owner = USB\n");
-					sii9234->vbus_owner = 0; /* UNKNOWN */
-				}
-				break;
-			case 0x20:
+		if ((sii9234->devcap.mhl_ver & 0xF0) >= 0x20) {
 				pr_info("%s() MHL dongle ver 2.0 ", __func__);
 				pr_cont("vbus_owner = PLIM\n");
 				switch (sii9234->plim) {
@@ -2054,7 +2053,7 @@ static void sii9234_detection_callback(struct work_struct *work)
 					case 2: /*TA*/
 						sii9234->vbus_owner = 2;
 						break;
-					case 3: /*USB*/ 
+					case 3: /*USB*/
 						sii9234->vbus_owner = 0;
 						break;
 					default:
@@ -2062,13 +2061,22 @@ static void sii9234_detection_callback(struct work_struct *work)
 						sii9234->vbus_owner = 0;
 						break;
 				}
-				break;
-			default:
-				pr_debug("%s() MHL dongle unknown version ", __func__);
+		} else if ((sii9234->devcap.mhl_ver & 0xF0) == 0x10) {
+			pr_info("%s() MHL dongle ver 1.0 ", __func__);
+			/*SAMSUNG DEVICE_ID 0x1134:dongle, 0x1234:dock*/
+			if (sii9234->devcap.device_id == SS_MHL_DONGLE_DEV_ID ||
+					sii9234->devcap.device_id == SS_MHL_DOCK_DEV_ID)
+				sii9234->vbus_owner = sii9234->devcap.reserved_data;
+			else {
 				pr_cont("vbus_owner = USB\n");
 				sii9234->vbus_owner = 0; /* UNKNOWN */
-				break;
+			}
+		} else {
+			pr_err("sii8240:%s MHL version error - 0x%X\n", __func__,
+					sii9234->devcap.mhl_ver);
+			sii9234->vbus_owner = 0; /* UNKNOWN */
 		}
+
 	}
 
 	pr_info("device_id:0x%4x, vbus_owner:%d\n",
@@ -2771,7 +2779,10 @@ static irqreturn_t sii9234_irq_thread(int irq, void *data)
 		} else {
 			pr_info("sii9234: hpd low\n");
 			/*Downstream HPD Low*/
-
+			if (sii9234->mhl_event_switch.state == 1) {
+				pr_debug("sii9234_data: %s MHL switch event sent :0\n", __func__);
+				switch_set_state(&sii9234->mhl_event_switch, 0);
+			}
 			/* Similar to above comments.
 			 * TODO:Do we need to override HPD OUT value
 			 * and do we need to disable TMDS here?
@@ -2825,6 +2836,10 @@ static irqreturn_t sii9234_irq_thread(int irq, void *data)
 			if ((value & RSEN_STATUS) == 0)	{
 				printk(KERN_INFO
 					"%s() RSEN Really LOW ~\n", __func__);
+				if (sii9234->mhl_event_switch.state == 1) {
+					pr_debug("sii9234_data: %s MHL switch event sent :0\n", __func__);
+					switch_set_state(&sii9234->mhl_event_switch, 0);
+				}
 				/*To meet CTS 3.3.22.2 spec*/
 				sii9234_tmds_control(sii9234, false);
 				force_usb_id_switch_open(sii9234);
@@ -3117,7 +3132,8 @@ static int __devinit sii9234_mhl_tx_i2c_probe(struct i2c_client *client,
 		goto err_exit2c;
 	}
 #endif
-
+	sii9234->mhl_event_switch.name = "mhl_event_switch";
+	switch_dev_register(&sii9234->mhl_event_switch);
 	return 0;
 
 err_exit2c:

@@ -915,10 +915,10 @@ static int msm8930_btsco_rate_put(struct snd_kcontrol *kcontrol,
 {
 
 	switch (ucontrol->value.integer.value[0]) {
-	case 8000:
+	case 0:
 		msm8930_btsco_rate = BTSCO_RATE_8KHZ;
 		break;
-	case 16000:
+	case 1:
 		msm8930_btsco_rate = BTSCO_RATE_16KHZ;
 		break;
 	default:
@@ -1481,7 +1481,16 @@ static int msm8930_hdmi_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 
 	struct snd_interval *channels = hw_param_interval(params,
 					SNDRV_PCM_HW_PARAM_CHANNELS);
+#if defined(CONFIG_MACH_MELIUS_SKT) || defined(CONFIG_MACH_MELIUS_KTT) || defined(CONFIG_MACH_MELIUS_LGT) || defined(CONFIG_MACH_MELIUS) || defined(CONFIG_MACH_SERRANO_KOR_LTE)
+    if (!hdmi_rate_variable)
+		rate->min = rate->max = 48000;
 
+	if (channels->max < 2)
+		channels->min = channels->max = 2;
+
+	if (channels->min != channels->max)
+		channels->min = channels->max;
+#else
 	if (!hdmi_rate_variable)
 		rate->min = rate->max = 48000;
 	channels->min = channels->max = msm_hdmi_rx_ch;
@@ -1490,6 +1499,7 @@ static int msm8930_hdmi_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 
  	if (channels->min != channels->max)
 		channels->min = channels->max;
+#endif
 
 	return 0;
 }

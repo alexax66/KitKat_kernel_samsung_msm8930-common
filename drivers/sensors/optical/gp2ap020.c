@@ -748,7 +748,7 @@ proximity_enable_store(struct device *dev,
 			__func__, (int)input);
 		input_report_abs(data->proximity_input_dev,
 			ABS_DISTANCE, input);
-		input_sync(data->proximity_input_dev);
+		input_sync(data->proximity_input_dev);
 		enable_irq(data->irq);
 	}
 	data->proximity_enabled = value;
@@ -1624,6 +1624,7 @@ static int gp2a_i2c_resume(struct device *dev)
 			pr_err("%s gpio request %d err\n", __func__, gp2a->irq);
 		if (gp2a->pdata->power_on)
 			gp2a->pdata->power_on(1);
+		proximity_onoff(1,gp2a);
 	}
 
 	mutex_lock(&gp2a->light_mutex);

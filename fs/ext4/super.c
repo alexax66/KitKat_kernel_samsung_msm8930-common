@@ -2865,7 +2865,7 @@ static struct ext4_li_request *ext4_li_request_new(struct super_block *sb,
 	 * spread the inode table initialization requests
 	 * better.
 	 */
-	erandom_get_random_bytes((char *)&rnd, sizeof(rnd));
+	get_random_bytes(&rnd, sizeof(rnd));
 	elr->lr_next_sched = jiffies + (unsigned long)rnd %
 			     (EXT4_DEF_LI_MAX_START_DELAY * HZ);
 
@@ -3416,7 +3416,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 		}
 
 	sbi->s_gdb_count = db_count;
-	erandom_get_random_bytes((char *)&sbi->s_next_generation, sizeof(u32));
+	get_random_bytes(&sbi->s_next_generation, sizeof(u32));
 	spin_lock_init(&sbi->s_next_gen_lock);
 
 	init_timer(&sbi->s_err_report);
@@ -4784,6 +4784,20 @@ out:
 }
 
 #endif
+
+void print_iloc_info(struct super_block *sb, struct ext4_iloc iloc)
+{
+	/* for debugging, woojoong.lee */
+	printk(KERN_ERR "iloc info, offset : %lu,"
+			, iloc.offset);
+	printk(KERN_ERR " group# : %u\n", iloc.block_group);
+	printk(KERN_ERR "sb info, inodes per group : %lu,"
+			, EXT4_SB(sb)->s_inodes_per_group);
+	printk(KERN_ERR " inode size : %d\n"
+			, EXT4_SB(sb)->s_inode_size);
+	print_bh(sb, iloc.bh, 0, EXT4_BLOCK_SIZE(sb));
+	/* end */
+}
 
 void print_bh(struct super_block *sb, struct buffer_head *bh
 		, int start, int len)

@@ -937,10 +937,10 @@ static int msm8930_btsco_rate_put(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
 	switch (ucontrol->value.integer.value[0]) {
-	case 8000:
+	case 0:
 		msm8930_btsco_rate = BTSCO_RATE_8KHZ;
 		break;
-	case 16000:
+	case 1:
 		msm8930_btsco_rate = BTSCO_RATE_16KHZ;
 		break;
 	default:
@@ -1044,6 +1044,10 @@ static const struct snd_kcontrol_new tapan_msm8930_i2s_controls[] = {
 		msm8930_pmic_gain_get, msm8930_pmic_gain_put),
 	SOC_ENUM_EXT("AUX PCM SampleRate", msm8930_auxpcm_enum[0],
 		msm8930_auxpcm_rate_get, msm8930_auxpcm_rate_put),
+#if	defined(CONFIG_MACH_SERRANO_KOR_LTE)
+	SOC_ENUM_EXT("Internal BTSCO SampleRate", msm8930_btsco_enum[0],
+		msm8930_btsco_rate_get, msm8930_btsco_rate_put),
+#endif
 };
 
 static int msm8930_hdmi_rate_put(struct snd_kcontrol *kcontrol,
@@ -1467,6 +1471,22 @@ static int msm8930_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	return 0;
 }
 
+static int msm8930_be_fm_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
+				struct snd_pcm_hw_params *params)
+{
+	struct snd_interval *rate = hw_param_interval(params,
+					SNDRV_PCM_HW_PARAM_RATE);
+
+	struct snd_interval *channels = hw_param_interval(params,
+					SNDRV_PCM_HW_PARAM_CHANNELS);
+
+	pr_debug("%s()\n", __func__);
+	rate->min = rate->max = 48000;
+	channels->min = channels->max = 2;
+
+	return 0;
+}
+
 static int msm8930_hdmi_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 					struct snd_pcm_hw_params *params)
 {
@@ -1476,7 +1496,7 @@ static int msm8930_hdmi_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	struct snd_interval *channels = hw_param_interval(params,
 					SNDRV_PCM_HW_PARAM_CHANNELS);
 
-#ifdef CONFIG_MACH_KS02
+#if defined(CONFIG_MACH_KS02) || defined(CONFIG_MACH_SERRANO_KOR_LTE)
 	if (channels->max < 2)
 		channels->min = channels->max = 2;
 
@@ -2371,7 +2391,7 @@ static struct snd_soc_dai_link msm8930_dai[] = {
 		.codec_dai_name = "msm-stub-rx",
 		.no_pcm = 1,
 		.be_id = MSM_BACKEND_DAI_INT_FM_RX,
-		.be_hw_params_fixup = msm8930_be_hw_params_fixup,
+		.be_hw_params_fixup = msm8930_be_fm_hw_params_fixup,
 		.ignore_pmdown_time = 1, /* this dainlink has playback support */
 	},
 	{

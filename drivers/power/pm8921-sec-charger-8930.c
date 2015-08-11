@@ -1904,7 +1904,9 @@ static int sec_fg_get_atomic_capacity(struct pm8921_chg_chip *chip, int soc)
 static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 {
 	int percent_soc;
-
+#if defined(CONFIG_MACH_WILCOX_EUR_LTE)
+	int batt_voltage;
+#endif
 	/*if (param_force_voltage_based_soc) {
 		percent_soc = voltage_based_capacity(chip);
 		goto out;
@@ -1978,6 +1980,17 @@ static int get_prop_batt_capacity(struct pm8921_chg_chip *chip)
 		percent_soc = 0;
 	else if (percent_soc > 100)
 		percent_soc = 100;
+
+#if defined(CONFIG_MACH_WILCOX_EUR_LTE)
+	if(percent_soc==0)
+	{
+		batt_voltage =get_prop_battery_uvolts(chip);
+		pr_info("%s : Power off voltage check : (%d)\n",__func__, batt_voltage);
+
+		if(batt_voltage>3400000)
+			percent_soc = 1;
+	}
+#endif
 
 	chip->recent_reported_soc = percent_soc;
 
@@ -2522,7 +2535,7 @@ static int pm_batt_power_get_property(struct power_supply *psy,
 		/*val->intval = chip->charging_enabled;*/
 		switch (chip->cable_type) {
 		case CABLE_TYPE_NONE:
-			val->intval = POWER_SUPPLY_TYPE_BATTERY;
+			val->intval = 0;
 			break;
 		case CABLE_TYPE_USB:
 			val->intval = POWER_SUPPLY_TYPE_USB;
@@ -2613,7 +2626,7 @@ static int pm_batt_power_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
 	case POWER_SUPPLY_PROP_TEMP_AMBIENT:
-		val->intval = get_prop_batt_temp(chip);
+		val->intval = chip->batt_temp;
 		break;
 	case POWER_SUPPLY_PROP_ENERGY_FULL:
 	case POWER_SUPPLY_PROP_ENERGY_NOW:
@@ -4695,6 +4708,19 @@ static void update_heartbeat(struct work_struct *work)
 	int batt_capacity;
 	int fsm_state;
 
+#if defined(CONFIG_SEC_PRODUCT_8930)
+/* Qualcomm debug patch start*/
+static int instances_count =0;
+
+instances_count ++; // increment by 1
+
+if(instances_count > 1)
+pr_err("update_heartbeat Called in parallel !!! : instances_count = %d", instances_count );
+
+/* Qualcomm debug patch end */
+
+#endif
+
 	if (chip->is_in_sleep)
 		chip->is_in_sleep = false;
 
@@ -4735,10 +4761,9 @@ static void update_heartbeat(struct work_struct *work)
 	pr_info("health(%d),stat(%d),chgen(%d),fsm(%d),cable(%d),extchg(%d)\n",
 		chip->batt_health, chip->batt_status, chip->charging_enabled,
 		fsm_state, chip->cable_type, chip->ext_charging);
-	pr_info("soc(%d/%d), v(%d), i(%d), temp(%d), batt(%d), absexpr(%d), siop(%d)\n",
+	pr_info("soc(%d/%d), i(%d), temp(%d), batt(%d), absexpr(%d), siop(%d)\n",
 		batt_capacity,
 		chip->capacity_raw,
-		get_prop_battery_uvolts(chip),
 		get_prop_batt_current(chip),
 		chip->batt_temp, chip->batt_present, chip->is_chgtime_expired,
 		chip->siop_level);
@@ -4765,6 +4790,21 @@ static void update_heartbeat(struct work_struct *work)
 	}
 #endif
 	wake_unlock(&chip->monitor_wake_lock);
+
+#if defined(CONFIG_SEC_PRODUCT_8930)
+
+/* Qualcomm debug patch start */
+instances_count --; // decrement by 1
+
+if(instances_count != 0)
+pr_err("update_heartbeat Called in parallel !!! ");
+
+if(instances_count < 0)
+pr_err("-ive instance count: This case is likely, still kept it to be sure ");
+
+/* Qualcomm debug patch end */
+
+#endif
 }
 #define VDD_LOOP_ACTIVE_BIT	BIT(3)
 #define VDD_MAX_INCREASE_MV	400
