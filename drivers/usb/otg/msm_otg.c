@@ -1137,7 +1137,8 @@ static int msm_otg_notify_chg_type(struct msm_otg *motg)
 	else if (motg->chg_type == USB_DCP_CHARGER ||
 			motg->chg_type == USB_PROPRIETARY_CHARGER)
 		charger_type = POWER_SUPPLY_TYPE_USB_DCP;
-	else if ((motg->chg_type == USB_ACA_DOCK_CHARGER ||
+	// carge limit should not be imposed for dock charger
+	else if ((//motg->chg_type == USB_ACA_DOCK_CHARGER ||
 		motg->chg_type == USB_ACA_A_CHARGER ||
 		motg->chg_type == USB_ACA_B_CHARGER ||
 		motg->chg_type == USB_ACA_C_CHARGER))
@@ -1320,9 +1321,12 @@ static int msm_otg_usbdev_notify(struct notifier_block *self,
 	 * ACA dock can supply IDEV_CHG irrespective devices connected
 	 * on the accessory port.
 	 */
-	if (!udev->parent || udev->parent->parent ||
+
+	// do not cause required code to be skipped -ziddey
+	// will not switch to a_host or charge otherwise
+	/*if (!udev->parent || udev->parent->parent ||
 			motg->chg_type == USB_ACA_DOCK_CHARGER)
-		goto out;
+		goto out;*/
 
 	switch (action) {
 	case USB_DEVICE_ADD:
@@ -2351,8 +2355,13 @@ static void msm_chg_detect_work(struct work_struct *w)
 				break;
 			}
 
-			if (line_state) /* DP > VLGC or/and DM > VLGC */
-				motg->chg_type = USB_PROPRIETARY_CHARGER;
+			if (line_state) /* DP > VLGC or/and DM > VLGC */ {
+			// simulate ID_A to force host mode with charging -ziddey
+			pr_info("*** FORCING USB HOST MODE WITH CHARGING ***\n");
+			set_bit(ID_A, &motg->inputs);
+			motg->chg_type = USB_ACA_DOCK_CHARGER;
+			//motg->chg_type = USB_PROPRIETARY_CHARGER;
+		}
 			else
 				motg->chg_type = USB_SDP_CHARGER;
 
@@ -3221,11 +3230,13 @@ void msm_otg_set_vbus_state(int online)
 {
 	static bool init;
 	struct msm_otg *motg = the_msm_otg;
-	struct usb_otg *otg = motg->phy.otg;
+
+	//need BSV interrupt in A Host Mode to detect cable unplug -ziddey
+	//struct usb_otg *otg = motg->phy.otg;
 
 	/* In A Host Mode, ignore received BSV interrupts */
-	if (otg->phy->state >= OTG_STATE_A_IDLE)
-		return;
+	/*if (otg->phy->state >= OTG_STATE_A_IDLE)
+		return;*/
 
 	if (online) {
 		dev_info(otg->phy->dev, "PMIC: BSV set\n");
@@ -3233,6 +3244,9 @@ void msm_otg_set_vbus_state(int online)
 	} else {
 		dev_info(otg->phy->dev, "PMIC: BSV clear\n");
 		clear_bit(B_SESS_VLD, &motg->inputs);
+	// disable host mode (if enabled) -ziddey
+	if (test_and_clear_bit(ID_A, &motg->inputs))
+	pr_info("*** UNFORCING USB HOST MODE ***\n");
 	}
 
 	if (!init) {
@@ -3447,37 +3461,40 @@ static ssize_t msm_otg_mode_write(struct file *file, const char __user *ubuf,
 
 	switch (req_mode) {
 	case USB_NONE:
-		switch (phy->state) {
+		/*switch (phy->state) {
 		case OTG_STATE_A_HOST:
 		case OTG_STATE_B_PERIPHERAL:
-			set_bit(ID, &motg->inputs);
+			set_bit(ID, &motg->inputs);*/
+			clear_bit(ID_A, &motg->inputs);
 			clear_bit(B_SESS_VLD, &motg->inputs);
 			break;
-		default:
+		/*default:
 			goto out;
 		}
-		break;
+		break;*/
 	case USB_PERIPHERAL:
-		switch (phy->state) {
+		/*switch (phy->state) {
 		case OTG_STATE_B_IDLE:
 		case OTG_STATE_A_HOST:
-			set_bit(ID, &motg->inputs);
+			set_bit(ID, &motg->inputs);*/
+			clear_bit(ID_A, &motg->inputs);
 			set_bit(B_SESS_VLD, &motg->inputs);
 			break;
-		default:
+		/*default:
 			goto out;
 		}
-		break;
+		break;*/
 	case USB_HOST:
-		switch (phy->state) {
+		/*switch (phy->state) {
 		case OTG_STATE_B_IDLE:
 		case OTG_STATE_B_PERIPHERAL:
-			clear_bit(ID, &motg->inputs);
+			clear_bit(ID, &motg->inputs);*/
+			set_bit(ID_A, &motg->inputs);
 			break;
-		default:
+		/*default:
 			goto out;
 		}
-		break;
+		break;*/
 	default:
 		goto out;
 	}
@@ -3642,8 +3659,9 @@ static int msm_otg_debugfs_init(struct msm_otg *motg)
 	if (!msm_otg_dbg_root || IS_ERR(msm_otg_dbg_root))
 		return -ENODEV;
 
-	if (motg->pdata->mode == USB_OTG &&
-		motg->pdata->otg_control == OTG_USER_CONTROL) {
+	// enable /sys/kernel/debug/msm_otg/host -ziddey
+	if (motg->pdata->mode == USB_OTG /*&&
+		motg->pdata->otg_control == OTG_USER_CONTROL*/) {
 
 		msm_otg_dentry = debugfs_create_file("mode", S_IRUGO |
 			S_IWUSR, msm_otg_dbg_root, motg,
