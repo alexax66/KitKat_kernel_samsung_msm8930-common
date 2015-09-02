@@ -780,35 +780,35 @@ config SEC_TORCH_FLASH
 	bool "torch flash driver"
 	default n
 	help
-	  This driver provides torch flash function.	  
+	  This driver provides torch flash function.
 
 config CHG_INCOMPATIBLE
-        tristate "support incompatible charger"
-        default n
-        help
-          this option enable support for incompatible charger
+	tristate "support incompatible charger"
+	default n
+	help
+	  This option enable support for incompatible charger
 
 config NFC_PN544
-        bool "NXP PN544 NFC Controller Driver"
-        default n
-        help
-          NXP PN544 Near Field Communication controller support.
+	bool "NXP PN544 NFC Controller Driver"
+	default n
+	help
+	  NXP PN544 Near Field Communication controller support.
 
 config NFC_PN547
-    bool "NXP PN547 NFC Controller Driver"
-    depends on I2C
-    default n
-    help
-      NXP PN547 Near Field Communication controller support.
+	bool "NXP PN547 NFC Controller Driver"
+	depends on I2C
+	default n
+	help
+	  NXP PN547 Near Field Communication controller support.
 
 config NFC_PN547_CLOCK_REQUEST
-    bool "NXP PN547 PM8917 XO Clock Source"
-    depends on NFC_PN547
-    default n
-    help
-      PM8917 Clock request for NXP PN547 Near Field
-      Communication controller support.
-      This option enables A1 clock for NFC.
+	bool "NXP PN547 PM8917 XO Clock Source"
+	depends on NFC_PN547
+	default n
+	help
+	  PM8917 Clock request for NXP PN547 Near Field
+	  Communication controller support.
+	  This option enables A1 clock for NFC.
 
 config GAMMA_CONTROL
 	bool "Gamma Control for OLED"
@@ -822,10 +822,10 @@ config GENERIC_BLN
 	depends on SYSFS
 	default n
 	help
-	 Say Y here to enable the backlight notification
-	 for android led-notification (modified liblight needed).
-	 A kernel wakelock is implemented to retain the leds
-	 enabled in suspend.
+	  Say Y here to enable the backlight notification
+	  for android led-notification (modified liblight needed).
+	  A kernel wakelock is implemented to retain the leds
+	  enabled in suspend.
 
 menu "BLN Options"
 
@@ -834,14 +834,14 @@ config GENERIC_BLN_ENABLED
 	depends on GENERIC_BLN
 	default n
 	help
-	 Say Y here to enable BLN by default
+	  Say Y here to enable BLN by default
 
 config GENERIC_BLN_BLINK_ENABLED
 	bool "Enable Generic BLN blinking by default"
 	depends on GENERIC_BLN
 	default n
 	help
-	 Say Y here to enable BLN blinks by default
+	  Say Y here to enable BLN blinks by default
 
 endmenu
 source "drivers/misc/c2port/Kconfig"

@@ -21,7 +21,7 @@
 #define	SUPPORT_MULTI_PCB	0
 #endif
 
-extern int touch_is_pressed;
+extern unsigned int system_rev;
 
 enum {
 	TC360_SUSPEND_WITH_POWER_OFF = 0,
