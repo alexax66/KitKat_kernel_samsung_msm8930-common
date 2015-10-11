@@ -951,6 +951,11 @@ config MACH_SERRANO_EUR_LTE
 	bool "MSM8930 SERRANO EUR LTE"
 	help
 	  Support for the Samsung Serrano device.
+config MACH_SERRANO_KOR_LTE
+	depends on MACH_SERRANO
+	bool "MSM8930 SERRANO EUR LTE"
+	help
+	  Support for the Samsung Serrano device.
 config MACH_SERRANO_EUR_3G
         depends on MACH_SERRANO
         bool "MSM8930 SERRANO EUR 3G"
