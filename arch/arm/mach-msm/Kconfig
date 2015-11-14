@@ -1308,7 +1308,7 @@ config TARGET_LOCALE_JPN
 	help
 	  Enable LOCALE JPN.
 	  used to distinguish LOCALE-related differences.
-	  
+	
 endmenu
 
 config MSM_STACKED_MEMORY
@@ -3101,6 +3101,12 @@ config BRICKED_HOTPLUG
 	help
 	  This enables kernel based multi core control.
 	  (up/down hotplug based on load)
+
+config ALUCARD_HOTPLUG
+	bool "Enable alucard-hotplug cpu hotplug driver"
+	default y
+	help
+	  Generic Alucard-hotplug cpu hotplug driver for ARM SOCs
 
 config MSM_CPR
 	tristate "Use MSM CPR in S/W mode"
