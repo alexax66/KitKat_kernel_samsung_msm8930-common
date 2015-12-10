@@ -490,3 +490,5 @@ obj-$(CONFIG_BT_BCM4334) += board-bluetooth-bcm4334.o
 obj-$(CONFIG_INTELLI_PLUG) += intelli_plug.o
 obj-$(CONFIG_MSM_HOTPLUG) += msm_hotplug.o
 obj-$(CONFIG_ALUCARD_HOTPLUG) += alucard_hotplug.o
+obj-$(CONFIG_SLEEPY_PLUG) += sleepy_plug.o
+
