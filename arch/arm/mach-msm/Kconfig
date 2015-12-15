@@ -3104,7 +3104,7 @@ config SLEEPY_PLUG
 	bool "sleepy_plug by rmbq"
 	default y
 	help
-	  CPU hotplug driver based on sleepy_plug by faux123
+	  CPU hotplug driver based on intelli_plug by faux123
 
 config MSM_CPR
 	tristate "Use MSM CPR in S/W mode"
